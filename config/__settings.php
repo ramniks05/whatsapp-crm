@@ -72,7 +72,7 @@ return [
                 'key' => 'name',
                 'data_type' => 1,    // string,
                 'placeholder' => 'Your Website Name',
-                'default' => 'Your Company Name',
+                'default' => 'Digital Creatorss',
                 /* 'validation_rules'   => [
                     'min:0'
                 ] */
@@ -81,7 +81,7 @@ return [
                 'key' => 'description',
                 'data_type' => 1, // string,
                 'placeholder' => 'Your Website description',
-                'default' => '',
+                'default' => 'Digital Creatorss - WhatsApp Marketing Platform',
             ],
             'contact_email' => [
                 'key' => 'contact_email',

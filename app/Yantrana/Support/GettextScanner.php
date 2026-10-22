@@ -137,7 +137,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: LivelyWorks Translator System\n"';
+"X-Generator: Digital Creatorss Translator System\n"';
 
         if (! \str_contains($oldContent, 'Project-Id-Version')) {
             fwrite($file, $headMetadata."\n\n");

@@ -258,7 +258,7 @@ class TransactionEngine extends BaseEngine implements TransactionEngineInterface
         }
 
         // Settings
-        $brandName = getAppSettings('invoice_brand_name') ?: getAppSettings('name') ?: 'WhatsJet';
+        $brandName = getAppSettings('invoice_brand_name') ?: getAppSettings('name') ?: 'Digital Creatorss';
         $brandAddress = getAppSettings('invoice_address') ?: '';
         $additionalInfo = getAppSettings('invoice_additional_info') ?: '';
         $taxLabel = getAppSettings('tax_label') ?: '';
