@@ -81,6 +81,7 @@
             </legend>
             <div class="mb-2">
                 <button type="button" class="btn btn-light btn-sm" onclick="lwRefreshInvoicePreview()"><i class="fa fa-sync"></i> <?= __tr('Refresh Preview') ?></button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="lwPrintInvoicePreview()"><i class="fa fa-print"></i> <?= __tr('Print Preview') ?></button>
                 <button type="button" class="btn btn-light btn-sm" onclick="lwOpenInvoicePreview()"><i class="fas fa-external-link-alt"></i> <?= __tr('Open in New Tab') ?></button>
             </div>
             <iframe id="lwInvoicePreviewFrame" title="<?= __tr('Invoice Preview') ?>" src="<?= route('manage.configuration.invoice_billing_preview') ?>" style="width: 100%; height: 760px; border: 1px solid #e3e6f0; border-radius: 6px; background: #fff;"></iframe>
@@ -114,6 +115,10 @@
 
         window.lwOpenInvoicePreview = function () {
             window.open(buildInvoicePreviewUrl(), '_blank');
+        };
+
+        window.lwPrintInvoicePreview = function () {
+            window.open(buildInvoicePreviewUrl() + '&print=1', '_blank');
         };
 
         $('#lwInvoiceBillingForm').on('input change', previewFields, function () {
