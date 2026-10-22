@@ -105,14 +105,12 @@ class ConfigurationController extends BaseController
             }
         }
         $subtotal = ($taxRate > 0) ? ($amount / (1 + ($taxRate / 100))) : $amount;
-        $isPrint = $request->get('print') == 1;
 
-        return response(view($isPrint ? 'transaction.print-invoice' : 'transaction.invoice', [
-            'isPdf' => !$isPrint,
+        return response(view('transaction.invoice', [
+            'isPdf' => true,
             'isRefund' => false,
             'documentTitle' => __tr('Invoice'),
             'transaction' => (object) [
-                '_uid' => 'PREVIEW0000000000001',
                 'created_at' => now(),
                 'vendor_title' => __tr('Sample Client Pvt. Ltd.'),
                 'notes' => null,
