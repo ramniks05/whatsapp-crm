@@ -246,7 +246,7 @@ if (!isset($maxPlanNumber)) {
                         <div class="card-body collapse" :id="`lwPaidBlock${planId}`" data-parent="#lwSubscriptionPlansContainer">
 
                             <!--  Add New Plan Form -->
-                            <x-lw.form :id="`lwAddNewPlanForm-${planId}`"
+                            <x-lw.form ::id="`lwAddNewPlanForm-${planId}`"
                                 :action="route('manage.configuration.subscription-plans.write.update')">
                                 <!-- form fields form fields -->
                                 <input type="hidden" name="config_plan_id" :value="planId">
@@ -254,9 +254,11 @@ if (!isset($maxPlanNumber)) {
                                 data-lw-plugin="lwSwitchery"/> <label :for="`select_${planId}`">{{ __tr('Enable this Plan') }}</label>
                                 <hr class="my-3">
                                 <!-- Title -->
-                                <x-lw.input-field type="text" :id="`${planId}_title`" name="title"
-                                    :label="__tr('Title')" required placeholder="{{ __tr('your plan title') }}"
-                                    value=""/>
+                                <div class="form-group mb-1">
+                                    <label :for="`${planId}_title`">{{ __tr('Title') }}</label>
+                                    <input type="text" class="lw-form-field form-control" :id="`${planId}_title`" name="title"
+                                        required placeholder="{{ __tr('your plan title') }}" value=""/>
+                                </div>
                                 <h3 class="text-danger mt-4">{{ __tr('Feature Limits') }}</h3>
                                 <div class="row pl-3">
                                     <template x-for="(feature, featureKey) in item.features" :key="featureKey">
