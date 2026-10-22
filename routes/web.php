@@ -414,6 +414,11 @@ Route::middleware([
                     ConfigurationController::class,
                     'processProductRegistrationRemoval',
                 ])->name('installation.version.create.remove_registration');
+                // Invoice & Billing sample invoice preview
+                Route::get('/invoice-billing/preview', [
+                    ConfigurationController::class,
+                    'invoiceBillingPreview',
+                ])->name('manage.configuration.invoice_billing_preview');
                 // View Configuration View
                 Route::get('/{pageType}', [
                     ConfigurationController::class,

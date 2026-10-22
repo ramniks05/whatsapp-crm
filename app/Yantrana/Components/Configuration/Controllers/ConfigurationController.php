@@ -76,6 +76,64 @@ class ConfigurationController extends BaseController
     }
 
     /**
+     * Render a sample invoice using the Invoice & Billing settings.
+     * Query values (unsaved form input) take priority over saved settings.
+     *
+     * @param  BaseRequest  $request
+     * @return \Illuminate\Http\Response
+     *---------------------------------------------------------------- */
+    public function invoiceBillingPreview(BaseRequest $request)
+    {
+        $setting = function ($key) use ($request) {
+            return $request->has($key) ? (string) $request->get($key) : (string) getAppSettings($key);
+        };
+        $taxRate = max(0, floatval($setting('tax_rate')));
+        $planTitle = __tr('Standard');
+        $planFrequency = 'monthly';
+        $amount = 999;
+        foreach ((getPaidPlans() ?: []) as $plan) {
+            if (!data_get($plan, 'enabled')) {
+                continue;
+            }
+            foreach ((data_get($plan, 'charges') ?: []) as $frequency => $charge) {
+                if (data_get($charge, 'enabled') and (floatval(data_get($charge, 'charge')) > 0)) {
+                    $planTitle = data_get($plan, 'title') ?: $planTitle;
+                    $planFrequency = $frequency;
+                    $amount = floatval(data_get($charge, 'charge'));
+                    break 2;
+                }
+            }
+        }
+        $subtotal = ($taxRate > 0) ? ($amount / (1 + ($taxRate / 100))) : $amount;
+
+        return response(view('transaction.invoice', [
+            'isPdf' => true,
+            'isRefund' => false,
+            'documentTitle' => __tr('Invoice'),
+            'transaction' => (object) [
+                'created_at' => now(),
+                'vendor_title' => __tr('Sample Client Pvt. Ltd.'),
+                'notes' => null,
+                'reference_id' => null,
+            ],
+            'invoiceId' => 'PREVIEW0000000000001',
+            'buyerEmail' => 'client@example.com',
+            'brandName' => $setting('invoice_brand_name') ?: (getAppSettings('name') ?: 'Digital Creatorss'),
+            'brandAddress' => $setting('invoice_address'),
+            'additionalInfo' => $setting('invoice_additional_info'),
+            'taxLabel' => $setting('tax_label'),
+            'taxRate' => $taxRate,
+            'logoUrl' => getAppSettings('invoice_logo_image_url') ?: '',
+            'planTitle' => $planTitle,
+            'planFrequency' => $planFrequency,
+            'paymentMethod' => 'UPI',
+            'subtotal' => $subtotal,
+            'taxAmount' => $amount - $subtotal,
+            'amount' => $amount,
+        ])->render())->header('X-Robots-Tag', 'noindex');
+    }
+
+    /**
      * Get Configuration Data.
      *
      * @param  string  $pageType

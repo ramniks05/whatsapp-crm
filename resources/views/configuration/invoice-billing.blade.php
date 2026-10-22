@@ -7,8 +7,10 @@
 <hr>
 
 @if($isExtendedLicence)
+    <div class="row">
+    <div class="col-xl-6">
     <!-- Invoice & Billing Settings Form -->
-    <form class="lw-ajax-form lw-form" method="post" action="<?= route('manage.configuration.write', ['pageType' => request()->pageType]) ?>">
+    <form id="lwInvoiceBillingForm" class="lw-ajax-form lw-form" method="post" action="<?= route('manage.configuration.write', ['pageType' => request()->pageType]) ?>">
         <div class="row">
             <div class="col-lg-12">
                 <!-- Allow Vendor to Download Invoice -->
@@ -69,6 +71,24 @@
         </div>
     </form>
     <!-- /Invoice & Billing Settings Form -->
+    </div>
+    <!-- Invoice Preview -->
+    <div class="col-xl-6 mt-4 mt-xl-0">
+        <fieldset class="h-100">
+            <legend>
+                <?= __tr('Invoice Preview') ?>
+                <small class="text-muted"><?= __tr('Sample data, updates as you type') ?></small>
+            </legend>
+            <div class="mb-2">
+                <button type="button" class="btn btn-light btn-sm" onclick="lwRefreshInvoicePreview()"><i class="fa fa-sync"></i> <?= __tr('Refresh Preview') ?></button>
+                <button type="button" class="btn btn-light btn-sm" onclick="lwOpenInvoicePreview()"><i class="fas fa-external-link-alt"></i> <?= __tr('Open in New Tab') ?></button>
+            </div>
+            <iframe id="lwInvoicePreviewFrame" title="<?= __tr('Invoice Preview') ?>" src="<?= route('manage.configuration.invoice_billing_preview') ?>" style="width: 100%; height: 760px; border: 1px solid #e3e6f0; border-radius: 6px; background: #fff;"></iframe>
+            <small class="form-text text-muted"><?= __tr('Unsaved changes are shown here, click Save to apply them to real invoices.') ?></small>
+        </fieldset>
+    </div>
+    <!-- /Invoice Preview -->
+    </div>
 @else
     <div class="alert alert-warning my-3">
         <strong title="Extended Licence Required"><?= __tr('Extended Licence Required') ?></strong> <br>
@@ -80,9 +100,30 @@
 <script>
     (function($) {
         'use strict';
+        var previewBaseUrl = "<?= route('manage.configuration.invoice_billing_preview') ?>",
+            previewFields = '[name="invoice_brand_name"], [name="invoice_address"], [name="tax_label"], [name="tax_rate"], [name="invoice_additional_info"]',
+            previewTimer = null;
+
+        var buildInvoicePreviewUrl = function () {
+            return previewBaseUrl + '?' + $('#lwInvoiceBillingForm').find(previewFields).serialize() + '&_t=' + Date.now();
+        };
+
+        window.lwRefreshInvoicePreview = function () {
+            $('#lwInvoicePreviewFrame').attr('src', buildInvoicePreviewUrl());
+        };
+
+        window.lwOpenInvoicePreview = function () {
+            window.open(buildInvoicePreviewUrl(), '_blank');
+        };
+
+        $('#lwInvoiceBillingForm').on('input change', previewFields, function () {
+            clearTimeout(previewTimer);
+            previewTimer = setTimeout(window.lwRefreshInvoicePreview, 600);
+        });
+
         // After invoice logo file successfully uploaded then this function is called
         window.afterUploadedInvoiceLogo = function (responseData) {
-            // Handled automatically by lwUploader preview
+            setTimeout(window.lwRefreshInvoicePreview, 500);
         }
     })(jQuery);
 </script>
