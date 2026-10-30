@@ -730,6 +730,16 @@ class ManualSubscriptionEngine extends BaseEngine implements ManualSubscriptionE
     *---------------------------------------------------------------- */
     public function processRazorpayCheckout($inputData)
     {
+        if (! empty($inputData['paymentVerified']) && ! empty($inputData['razorpayPaymentId'])) {
+            $razorpayResponse = [
+                'manual_subscription_uid' => $inputData['packageUid'],
+                'txn_reference' => $inputData['razorpayPaymentId'],
+                'id' => $inputData['razorpayPaymentId'],
+            ];
+
+            return $this->recordSentPaymentDetails($razorpayResponse);
+        }
+
         // process card capture payment
         $razorpayChargeRequest = $this->razorpayEngine->capturePayment($inputData['razorpayPaymentId']);
 

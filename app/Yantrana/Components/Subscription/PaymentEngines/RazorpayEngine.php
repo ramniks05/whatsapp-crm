@@ -33,24 +33,107 @@ use Illuminate\Support\Str;
 class RazorpayEngine extends BaseEngine
 {
     protected $razorpayAPI;
+
     protected $webhookSecret;
+
+    protected string $publishableKey = '';
+
     /**
      * Constructor.
      *
      *-----------------------------------------------------------------------*/
     public function __construct()
     {
-        //check razorpay test mode is on
-        if (getAppSettings('use_test_razorpay')) {
-            $razorpayKey = getAppSettings('razorpay_testing_publishable_key');
-            $razorpaySecret = getAppSettings('razorpay_testing_secret_key');
-            $this->webhookSecret = getAppSettings('razorpay_testing_webhook_secret');
-        } else {
-            $razorpayKey = getAppSettings('razorpay_live_publishable_key');
-            $razorpaySecret = getAppSettings('razorpay_live_secret_key');
-            $this->webhookSecret = getAppSettings('razorpay_live_webhook_secret');
-        }
+        [$razorpayKey, $razorpaySecret, $this->webhookSecret] = $this->resolveApiCredentials();
+        $this->publishableKey = (string) $razorpayKey;
         $this->razorpayAPI = new RazorpayAPI($razorpayKey, $razorpaySecret);
+    }
+
+    /**
+     * Prefer .env credentials; fall back to super-admin payment settings.
+     */
+    protected function resolveApiCredentials(): array
+    {
+        $envKey = config('services.razorpay.key_id');
+        $envSecret = config('services.razorpay.key_secret');
+        if (! __isEmpty($envKey) && ! __isEmpty($envSecret)) {
+            return [
+                $envKey,
+                $envSecret,
+                config('services.razorpay.webhook_secret') ?: '',
+            ];
+        }
+        if (getAppSettings('use_test_razorpay')) {
+            return [
+                getAppSettings('razorpay_testing_publishable_key'),
+                getAppSettings('razorpay_testing_secret_key'),
+                getAppSettings('razorpay_testing_webhook_secret'),
+            ];
+        }
+
+        return [
+            getAppSettings('razorpay_live_publishable_key'),
+            getAppSettings('razorpay_live_secret_key'),
+            getAppSettings('razorpay_live_webhook_secret'),
+        ];
+    }
+
+    public function getPublishableKey(): string
+    {
+        return $this->publishableKey;
+    }
+
+    /**
+     * Create Razorpay order (Standard Checkout step 1).
+     */
+    public function createOrder(int $amountPaise, string $currency, string $receipt, array $notes = [])
+    {
+        try {
+            $order = $this->razorpayAPI->order->create([
+                'amount' => $amountPaise,
+                'currency' => $currency,
+                'receipt' => Str::limit($receipt, 40, ''),
+                'notes' => $notes,
+            ]);
+
+            return $this->engineReaction(1, [
+                'order_id' => $order['id'],
+                'amount' => $order['amount'],
+                'currency' => $order['currency'],
+            ], __tr('Order created.'));
+        } catch (BadRequestError $e) {
+            $httpStatus = str_contains(strtolower($e->getMessage()), 'auth') ? 401 : 400;
+
+            return $this->engineReaction(2, [
+                'http_status' => $httpStatus,
+                'errorMessage' => $e->getMessage(),
+            ], $e->getMessage());
+        } catch (\Exception $e) {
+            return $this->engineReaction(2, [
+                'http_status' => 500,
+                'errorMessage' => $e->getMessage(),
+            ], $e->getMessage());
+        }
+    }
+
+    /**
+     * Verify payment signature (Standard Checkout step 3).
+     */
+    public function verifyPaymentSignature(string $orderId, string $paymentId, string $signature): bool
+    {
+        try {
+            $this->razorpayAPI->utility->verifyPaymentSignature([
+                'razorpay_order_id' => $orderId,
+                'razorpay_payment_id' => $paymentId,
+                'razorpay_signature' => $signature,
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            __logDebug($e->getMessage());
+
+            return false;
+        }
     }
 
     /**

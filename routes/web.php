@@ -21,6 +21,7 @@ use App\Yantrana\Components\Contact\Controllers\ContactCustomFieldController;
 use App\Yantrana\Components\Subscription\Controllers\StripeWebhookController;
 use App\Yantrana\Components\Configuration\Controllers\ConfigurationController;
 use App\Yantrana\Components\Subscription\Controllers\ManualSubscriptionController;
+use App\Yantrana\Components\Subscription\Controllers\RazorpayCheckoutController;
 use App\Yantrana\Components\WhatsAppService\Controllers\WhatsAppServiceController;
 use App\Yantrana\Components\WhatsAppService\Controllers\WhatsAppTemplateController;
 use App\Yantrana\Components\Transaction\Controllers\TransactionController;
@@ -546,6 +547,19 @@ Route::middleware([
             });
         });
     // Vendor Routes
+    Route::middleware([
+        App\Http\Middleware\VendorAccessCheckpost::class,
+    ])->prefix('api')->group(function () {
+        Route::post('/create-order', [
+            RazorpayCheckoutController::class,
+            'createOrder',
+        ])->name('razorpay.api.create_order');
+        Route::post('/verify-payment', [
+            RazorpayCheckoutController::class,
+            'verifyPayment',
+        ])->name('razorpay.api.verify_payment');
+    });
+
     Route::middleware([
         App\Http\Middleware\VendorAccessCheckpost::class,
     ])->prefix('vendor-console')
