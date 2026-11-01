@@ -637,6 +637,12 @@ class ManualSubscriptionEngine extends BaseEngine implements ManualSubscriptionE
                     'manual_subscriptions__id' => $subscriptionRequestRecord->_id,
                 ]);
 
+                $this->sendSubscriptionPaymentSuccessEmail(
+                    $subscriptionRequestRecord,
+                    $vendorUserData,
+                    $request['txn_reference']
+                );
+
                 return $this->engineSuccessResponse([
                     'txn_reference' => $request['txn_reference'],
                     'redirectRoute' => route('payment.success.page', ['txnId' => $request['txn_reference']]),
@@ -677,6 +683,35 @@ class ManualSubscriptionEngine extends BaseEngine implements ManualSubscriptionE
             }
         }
         return $this->engineFailedResponse([], __tr('Failed to record your payment details'));
+    }
+
+    /**
+     * Email vendor admin after automatic gateway payment (Razorpay, PayPal, etc.).
+     */
+    protected function sendSubscriptionPaymentSuccessEmail($subscriptionRequestRecord, $vendorUserData, $txnReference): void
+    {
+        if (__isEmpty($vendorUserData) || __isEmpty($vendorUserData->email)) {
+            return;
+        }
+
+        $planStructure = getPaidPlans($subscriptionRequestRecord->plan_id);
+
+        $this->baseMailer->notifyToUser(
+            __tr('Your subscription payment was successful'),
+            'subscription-payment-success',
+            [
+                'name' => $vendorUserData->first_name . ' ' . $vendorUserData->last_name,
+                'customerName' => $vendorUserData->first_name . ' ' . $vendorUserData->last_name,
+                'planTitle' => $planStructure['title'] ?? $subscriptionRequestRecord->plan_id,
+                'planFrequency' => $planStructure['charges'][$subscriptionRequestRecord->charges_frequency]['title']
+                    ?? $subscriptionRequestRecord->charges_frequency,
+                'planChargesFormatted' => formatAmount($subscriptionRequestRecord->charges, true, true),
+                'expiryDateFormatted' => formatDate($subscriptionRequestRecord->ends_at),
+                'txnReference' => $txnReference,
+                'subscriptionPageUrl' => route('subscription.read.show'),
+            ],
+            $vendorUserData->email
+        );
     }
 
     /**

@@ -1,0 +1,17 @@
+Hi {{CLIENT_NAME}},
+
+Your WhatsJet account on Digital Creatorss is ready.
+
+Login: https://whatsapp.digitalcreatorss.com/login
+Username: {{USERNAME}}
+Password: (sent separately – change after first login)
+
+To activate your plan:
+1) My Subscription → choose plan (monthly/yearly)
+2) Select Razorpay → Continue → Proceed To Pay
+3) Complete payment
+4) Transactions → invoice
+
+Help: info@digitalcreatorss.com | WhatsApp +91-8368142191
+
+– Digital Creatorss

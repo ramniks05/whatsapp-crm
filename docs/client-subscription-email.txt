@@ -1,0 +1,28 @@
+Subject: Your WhatsJet account is ready – activate your subscription
+
+Hello {{CLIENT_NAME}},
+
+Your WhatsJet account on Digital Creatorss is set up. Use the steps below to choose a plan and pay with Razorpay.
+
+LOGIN
+• Portal: https://whatsapp.digitalcreatorss.com/login
+• Username: {{USERNAME}}
+• Password: (sent separately – please change after first login)
+
+STEPS
+1. Sign in and open My Subscription.
+2. Pick a plan and monthly or yearly billing.
+3. Under Manual/Prepaid Subscription, choose Razorpay → Continue → Proceed To Pay.
+4. Complete payment in the Razorpay window.
+5. Confirm your plan and expiry on My Subscription.
+6. Open Transactions to view or print your invoice.
+
+SUPPORT – Digital Creatorss
+• Email: info@digitalcreatorss.com
+• Phone / WhatsApp: +91-8368142191
+• Website: https://digitalcreatorss.com/
+
+Note: This payment is for your WhatsJet platform subscription. WhatsApp Business setup for your own number is a separate step we can help with after your plan is active.
+
+Thank you,
+Digital Creatorss Team
