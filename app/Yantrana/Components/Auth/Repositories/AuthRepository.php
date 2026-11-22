@@ -75,7 +75,9 @@ class AuthRepository extends BaseRepository implements AuthRepositoryInterface
             'first_name',
             'last_name',
             'registered_via',
-            'username' => Str::lower(Str::slug($storeData['username'])),
+            // Keep username as typed (alpha_dash already validated). Str::slug()
+            // would turn underscores into hyphens and break unique checks on create.
+            'username' => Str::lower($storeData['username']),
             'mobile_number' => array_get($storeData, 'mobile_number'),
             'user_roles__id' => $storeData['user_roles__id'],
             // 'vendors__id',
