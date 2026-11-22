@@ -396,7 +396,7 @@ class AuthEngine extends BaseEngine implements AuthEngineInterface
             // add to title
             $vendor = $this->vendorRepository->storeVendor([
                 'title' => $inputData['vendor_title'],
-                'slug' => $inputData['username'],
+                'slug' => Str::lower(Str::slug($inputData['username'], '_')),
                 'status' => 1, // Active
                 'type' => 1, // types of vendor restaurant etc
             ]);
@@ -409,21 +409,41 @@ class AuthEngine extends BaseEngine implements AuthEngineInterface
             // Store user
             $newUser = $this->authRepository->storeUser($inputData);
             // Check if user not stored successfully
-            $emailData = [
-                'fullName' => $newUser->first_name,
-                'email' => $newUser->email,
-                'expirationTime' => configItem('account.expiry'),
-                'activation_url' => URL::temporarySignedRoute('user.account.activation', Carbon::now()->addHours(configItem('account.expiry')), ['userUid' => $newUser->_uid]),
-            ];
-            $activationEmailSubject = __tr('Your account registered successfully.');
-            if ($this->baseMailer->notifyToUser($activationEmailSubject, 'user.account.activation', $emailData, $newUser->email)) {
+            if (! $newUser) {
+                return $this->authRepository->transactionResponse(2, ['show_message' => true], __tr('Something went wrong on server, please contact to administrator.'));
+            }
+
+            $mailSent = false;
+            try {
+                $emailData = [
+                    'fullName' => $newUser->first_name,
+                    'email' => $newUser->email,
+                    'expirationTime' => configItem('account.expiry'),
+                    'activation_url' => URL::temporarySignedRoute('user.account.activation', Carbon::now()->addHours(configItem('account.expiry')), ['userUid' => $newUser->_uid]),
+                ];
+                $activationEmailSubject = __tr('Your account registered successfully.');
+                $mailSent = (bool) $this->baseMailer->notifyToUser($activationEmailSubject, 'user.account.activation', $emailData, $newUser->email);
+            } catch (\Throwable $e) {
+                __logDebug('Activation email failed: '.$e->getMessage());
+            }
+
+            if ($mailSent) {
                 return $this->authRepository->transactionResponse(1, [
                     'show_message' => true,
                     'activation_required' => true,
                 ], __tr('Your account has been created successfully, to activate your account please check your email.'));
             }
 
-            return $this->authRepository->transactionResponse(2, ['show_message' => true], __tr('Something went wrong on server, please contact to administrator.'));
+            // Mail/SMTP failure must not roll back the vendor — activate so they can log in
+            $this->authRepository->updateUser($newUser, [
+                'status' => 1,
+                'email_verified_at' => now(),
+            ]);
+
+            return $this->authRepository->transactionResponse(1, [
+                'show_message' => true,
+                'activation_required' => false,
+            ], __tr('Your account has been created successfully. You can log in now.'));
         });
 
         return $this->engineResponse($transactionResponse);
