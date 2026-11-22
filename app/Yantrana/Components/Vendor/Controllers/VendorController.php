@@ -77,39 +77,49 @@ class VendorController extends BaseController
 
     public function addVendor(CommonRequest $request)
     {
-        if(str_starts_with($request->get('mobile_number'), '0') or str_starts_with($request->get('mobile_number'), '+')) {
-            return $this->processResponse(2,[
-                2 => __tr('mobile number should be numeric value without prefixing 0 or +.')
-            ], [], true);
-        }
-        // Combine country code and mobile number
-        $mobileNumber = $request->mobile_number;
-        $request->validate([
-            'vendor_title' => 'required|string|min:2|max:100',
-            'username' => 'required|string|alpha_dash|min:2|max:45|unique:users,username',
-            'first_name' => 'required|string|min:1|max:45',
-            'last_name' => 'required|string|min:1|max:45',
-            'mobile_number' => [
-                'required',
-                'min:9',
-                'max:15',
-                function ($attribute, $value, $fail) use ($mobileNumber) {
-                    $exists = AuthModel::
-                    where('mobile_number', $mobileNumber)
-                    ->exists();
-                if ($exists) {
-                    $fail('The mobile number has already been taken with the given country code.');
-                }
-                }
-            ],
-            'email' => 'required|string|email|max:255|unique:users,email' . (getAppSettings('disallow_disposable_emails') ? '|indisposable' : ''),
-            'password' => 'required|string|confirmed|min:8',
-            'password_confirmation' => 'required',
-        ]);
-      
-        $processReaction = $this->authEngine->processRegistration($request->all());
+        try {
+            $mobileNumber = (string) $request->get('mobile_number', '');
+            if ($mobileNumber !== '' && (str_starts_with($mobileNumber, '0') || str_starts_with($mobileNumber, '+'))) {
+                return $this->processResponse(2, [
+                    2 => __tr('mobile number should be numeric value without prefixing 0 or +.'),
+                ], [], true);
+            }
+            $request->validate([
+                'vendor_title' => 'required|string|min:2|max:100',
+                'username' => 'required|string|alpha_dash|min:2|max:45|unique:users,username',
+                'first_name' => 'required|string|min:1|max:45',
+                'last_name' => 'required|string|min:1|max:45',
+                'mobile_number' => [
+                    'required',
+                    'min:9',
+                    'max:15',
+                    function ($attribute, $value, $fail) use ($mobileNumber) {
+                        $exists = AuthModel::where('mobile_number', $mobileNumber)->exists();
+                        if ($exists) {
+                            $fail('The mobile number has already been taken with the given country code.');
+                        }
+                    },
+                ],
+                'email' => 'required|string|email|max:255|unique:users,email' . (getAppSettings('disallow_disposable_emails') ? '|indisposable' : ''),
+                'password' => 'required|string|confirmed|min:8',
+                'password_confirmation' => 'required',
+            ]);
 
-        return $this->processResponse($processReaction, [], [], true);
+            $processReaction = $this->authEngine->processRegistration($request->all());
+
+            return $this->processResponse($processReaction, [], [], true);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            __logDebug('Add vendor failed: '.$e->getMessage());
+
+            return $this->processResponse(2, [
+                2 => __tr('Something went wrong on server, please contact to administrator.'),
+            ], [
+                'show_message' => true,
+                'error_detail' => config('app.debug') ? $e->getMessage() : null,
+            ], true);
+        }
     }
 
 

@@ -336,11 +336,21 @@ class AuthEngine extends BaseEngine implements AuthEngineInterface
             $newUser = $this->authRepository->storeUser($inputData);
             // Check if user not stored successfully
             if ($newUser) {
-                 //check if welcome email setting active
-                if (getAppSettings('send_welcome_email')) {
-                    $this->userWelcomeNotifyMail($newUser);
+                // Welcome email must never roll back / break registration
+                try {
+                    if (getAppSettings('send_welcome_email')) {
+                        $this->userWelcomeNotifyMail($newUser);
+                    }
+                } catch (\Throwable $e) {
+                    __logDebug('Welcome email failed: '.$e->getMessage());
                 }
-                    return $this->authRepository->transactionResponse(1, array_merge(['show_message' => true], $newUser->toArray()), __tr('Your account created successfully.'));
+
+                return $this->authRepository->transactionResponse(1, [
+                    'show_message' => true,
+                    '_uid' => $newUser->_uid,
+                    'username' => $newUser->username,
+                    'email' => $newUser->email,
+                ], __tr('Your account created successfully.'));
             }
 
             // Send failed server error message
